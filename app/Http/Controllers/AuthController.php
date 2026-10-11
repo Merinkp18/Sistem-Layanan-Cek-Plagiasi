@@ -26,15 +26,16 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'max:255'],
         ]);
 
-        $throttleKey = Str::transliterate(Str::lower($validated['identifier']).'|'.$request->ip());
+        $identifier = trim($validated['identifier']);
+        $throttleKey = 'silacek-login:'.Str::transliterate(Str::lower($identifier));
 
-        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
             throw ValidationException::withMessages([
                 'login' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($throttleKey).' detik.',
             ]);
         }
 
-        $admin = DB::table('admin')->where('username', $validated['identifier'])->first();
+        $admin = DB::table('admin')->where('username', $identifier)->first();
 
         if ($admin && Hash::check($validated['password'], $admin->password)) {
             RateLimiter::clear($throttleKey);
@@ -44,8 +45,8 @@ class AuthController extends Controller
         }
 
         $staff = DB::table('registrasi')
-            ->where('nip', $validated['identifier'])
-            ->orWhere('email', $validated['identifier'])
+            ->where('nip', $identifier)
+            ->orWhere('email', $identifier)
             ->first();
 
         if ($staff && Hash::check($validated['password'], $staff->password)) {
@@ -67,6 +68,12 @@ class AuthController extends Controller
 
         RateLimiter::hit($throttleKey, 60);
 
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            throw ValidationException::withMessages([
+                'login' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($throttleKey).' detik.',
+            ]);
+        }
+
         throw ValidationException::withMessages([
             'login' => 'Username/NIP/email atau password tidak sesuai.',
         ]);
@@ -80,11 +87,17 @@ class AuthController extends Controller
     public function register(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nama_lengkap' => ['required', 'string', 'max:100'],
-            'nip' => ['required', 'string', 'max:30', 'unique:registrasi,nip'],
+            'nama_lengkap' => ['required', 'string', 'max:100', 'regex:/^[\p{L} .,\x27-]+$/u'],
+            'nip' => ['required', 'digits:18', 'unique:registrasi,nip'],
             'email' => ['required', 'email', 'max:100', 'unique:registrasi,email'],
-            'no_hp' => ['required', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'no_hp' => ['required', 'regex:/^628[0-9]{8,12}$/'],
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+        ], [
+            'nama_lengkap.regex' => 'Nama hanya boleh berisi huruf, spasi, titik, koma, apostrof, dan tanda strip.',
+            'nip.digits'         => 'NIP harus berupa 18 digit angka.',
+            'nip.unique'         => 'NIP sudah terdaftar.',
+            'no_hp.regex'        => 'Nomor HP tidak valid (contoh: 62XXXXXXXXXXX).',
+            'password.confirmed' => 'Konfirmasi password tidak sama.',
         ]);
 
         DB::table('registrasi')->insert([
@@ -96,7 +109,7 @@ class AuthController extends Controller
             'status' => 'menunggu',
         ]);
 
-        return redirect()->route('login')->with('status', 'Pendaftaran berhasil dikirim. Silakan tunggu persetujuan admin.');
+        return redirect()->route('login')->with('status', 'Pendaftaran berhasil dikirim. Silakan tunggu persetujuan.');
     }
 
     public function dashboard(): View

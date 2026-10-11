@@ -12,6 +12,9 @@
             <p class="eyebrow">SILACEK</p>
             <h1>Selamat datang, {{ session('actor_name') }}</h1>
             <p>Login berhasil sebagai {{ session('actor_role') === 'admin' ? 'Admin' : 'Staff' }}.</p>
+            @if (session('actor_role') !== 'admin')
+                <a class="submit-button dashboard-action" href="{{ route('pengajuan.create') }}">Buat Pengajuan</a>
+            @endif
         </div>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
