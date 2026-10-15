@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,44 @@ use Throwable;
 
 class SubmissionController extends Controller
 {
+    public function index(Request $request): View
+    {
+        abort_unless($request->session()->get('actor_role') !== 'admin', 403);
+
+        $query = DB::table('form_pengajuan');
+
+        if ($request->session()->get('actor_role') === 'staff') {
+            $query->where('id_registrasi', $request->session()->get('actor_id'));
+        } elseif (is_string($request->session()->get('actor_nim_nip')) && $request->session()->get('actor_nim_nip') !== '') {
+            $query->where('nim_nip', $request->session()->get('actor_nim_nip'));
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        $submissions = $query->orderByDesc('tanggal_pengajuan')->get();
+
+        foreach ($submissions as $submission) {
+            $submission->queue_number = str_pad((string) $submission->id_pengajuan, 3, '0', STR_PAD_LEFT);
+            $submission->submitted_date = Carbon::parse($submission->tanggal_pengajuan)
+                ->locale('id')
+                ->translatedFormat('d F Y');
+            $submission->document_name = basename($submission->file_karya);
+            $submission->progress_step = match ($submission->status) {
+                'diproses' => 2,
+                'selesai' => 3,
+                default => 1,
+            };
+            $submission->status_label = match ($submission->status) {
+                'diproses' => 'Proses Pengecekan',
+                'selesai' => 'Hasil Pengecekan',
+                'ditolak' => 'Ditolak',
+                default => 'Menunggu',
+            };
+        }
+
+        return view('pengajuan.mine', compact('submissions'));
+    }
+
     public function create(Request $request): View
     {
         abort_unless($request->session()->get('actor_role') !== 'admin', 403);

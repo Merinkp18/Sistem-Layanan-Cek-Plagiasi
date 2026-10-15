@@ -17,5 +17,6 @@ Route::middleware('auth.actor')->group(function (): void {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     Route::get('/pengajuan', [SubmissionController::class, 'create'])->name('pengajuan.create');
     Route::post('/pengajuan', [SubmissionController::class, 'store'])->name('pengajuan.store');
+    Route::get('/pengecekan-saya', [SubmissionController::class, 'index'])->name('pengecekan-saya.index');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

@@ -284,6 +284,56 @@ body {
 .success-back-link { justify-self: end; color: #315b83; font-size: 12px; font-weight: 600; text-decoration: none; }
 .success-back-link:hover { text-decoration: underline; }
 
+.checking-content { min-width: 0; }
+.checking-title { margin: 0 0 6px; }
+.checking-title h1 { margin: 0 0 4px; color: #24466f; font-size: 27px; }
+.checking-title p { margin: 0; color: #50647c; font-size: 14px; }
+.checking-progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 14px 0 15px; padding: 12px 16px 10px; border-radius: 7px; background: #f5f8fb; list-style: none; }
+.checking-progress li { position: relative; display: grid; justify-items: center; gap: 6px; min-width: 0; color: #294d78; text-align: center; }
+.checking-progress li::before { position: absolute; z-index: 0; top: 14px; left: calc(50% + 14px); width: calc(100% - 28px); height: 2px; background: #c5d0dc; content: ''; }
+.checking-progress li:last-child::before { display: none; }
+.checking-progress li.is-reached::before { background: #48aaa2; }
+.checking-progress li span { z-index: 1; display: grid; width: 30px; height: 30px; place-items: center; border: 5px solid #aab9c9; border-radius: 50%; background: #fff; color: #7b8da1; font-size: 11px; font-weight: 700; }
+.checking-progress li.is-reached span { border-color: #294d78; color: #294d78; }
+.checking-progress li.is-current span { border-color: #294d78; background: #294d78; color: #fff; }
+.checking-progress li small { color: #516b84; font-size: 11px; font-weight: 500; line-height: 1.25; }
+.checking-progress li.is-current small { color: #24466f; font-weight: 700; }
+.checking-card { margin: 0 0 14px; padding: 17px 20px 16px; border: 1px solid #e0e5e9; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgb(26 43 59 / 4%); }
+.checking-card-top { display: grid; grid-template-columns: 76px minmax(180px, 1fr) minmax(180px, 0.72fr); align-items: center; gap: 14px; min-height: 70px; padding-bottom: 11px; border-bottom: 1px solid #edf0f3; }
+.queue-number { display: grid; align-content: center; justify-items: center; min-height: 58px; padding: 7px; border-radius: 7px; background: #294d78; color: #fff; }
+.queue-number span { font-size: 10px; }
+.queue-number strong { margin-top: 2px; font-size: 21px; }
+.checking-owner { display: grid; align-content: start; justify-items: start; gap: 3px; min-width: 0; color: #294d78; font-size: 13px; }
+.checking-owner strong { font-size: 15px; }
+.checking-owner > span:not(.applicant-type) { overflow-wrap: anywhere; }
+.applicant-type { margin-top: 2px; padding: 3px 14px; border-radius: 20px; background: #294d78; color: #fff; font-size: 11px; }
+.checking-date { display: grid; gap: 5px; min-height: 42px; padding: 3px 0 3px 16px; border-left: 1px solid #d3dce5; color: #294d78; font-size: 13px; }
+.checking-date time { color: #50647c; font-size: 11px; }
+.checking-card-bottom { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(160px, auto); align-items: center; gap: 17px; padding-top: 13px; }
+.checking-document-title, .checking-document-file { display: grid; align-content: start; gap: 6px; min-width: 0; min-height: 44px; color: #294d78; font-size: 12px; }
+.checking-document-title strong { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; font-size: 12px; font-weight: 500; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.checking-document-file > span:first-child { font-size: 12px; }
+.checking-document-file .checking-filename { display: flex; align-items: center; gap: 7px; overflow: hidden; max-width: 100%; white-space: nowrap; }
+.checking-filename svg { width: 17px; height: 17px; flex: none; color: #315b83; }
+.checking-filename span { overflow: hidden; text-overflow: ellipsis; }
+.checking-document-file { padding-left: 16px; border-left: 1px solid #d3dce5; }
+.checking-card-action { display: grid; justify-items: end; gap: 8px; }
+.checking-status { padding: 5px 12px; border-radius: 20px; background: #e5f3f1; color: #347a72; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.checking-status.status-diproses { background: #e9f0f9; color: #365f8a; }
+.checking-status.status-selesai { background: #dff3ef; color: #27786e; }
+.checking-status.status-ditolak { background: #fff0ee; color: #963c35; }
+.checking-detail { position: relative; }
+.checking-detail summary { padding: 6px 13px; border: 1px solid #345e89; border-radius: 7px; color: #294d78; font-size: 11px; list-style: none; cursor: pointer; white-space: nowrap; }
+.checking-detail summary::-webkit-details-marker { display: none; }
+.checking-detail summary span { margin-left: 7px; }
+.checking-detail-content { position: absolute; z-index: 2; top: calc(100% + 7px); right: 0; width: min(280px, 80vw); padding: 12px 14px; border: 1px solid #dbe3ea; border-radius: 7px; background: #fff; box-shadow: 0 8px 24px rgb(26 43 59 / 14%); }
+.checking-detail-content p { margin: 0 0 7px; color: #536b84; font-size: 12px; overflow-wrap: anywhere; }
+.checking-detail-content p:last-child { margin-bottom: 0; }
+.checking-empty { margin-top: 16px; padding: 30px 20px; border: 1px solid #e0e5e9; border-radius: 9px; background: #fff; text-align: center; }
+.checking-empty h2 { margin: 0 0 7px; color: #294d78; font-size: 18px; }
+.checking-empty p { margin: 0 0 15px; color: #66758a; font-size: 13px; }
+.checking-empty a { color: #258f89; font-size: 13px; font-weight: 700; text-decoration: none; }
+
 @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 760px) {
@@ -325,6 +375,16 @@ body {
     .submission-summary > div + div { border-top: 1px solid #d4dfe9; border-left: 0; }
     .summary-queue dd { font-size: 21px; }
     .success-back-link { justify-self: center; }
+    .checking-title h1 { font-size: 19px; }
+    .checking-progress { width: 100%; margin: 12px 0; padding: 10px 5px 8px; }
+    .checking-card { padding: 14px; }
+    .checking-card-top { grid-template-columns: 68px minmax(0, 1fr); gap: 10px; }
+    .queue-number { min-height: 54px; }
+    .checking-date { grid-column: 1 / -1; min-height: auto; padding: 8px 0 0; border-top: 1px solid #dce3e9; border-left: 0; }
+    .checking-card-bottom { grid-template-columns: 1fr; gap: 12px; padding-top: 12px; }
+    .checking-document-title, .checking-document-file { min-height: auto; }
+    .checking-document-file { padding: 10px 0 0; border-top: 1px solid #dce3e9; border-left: 0; }
+    .checking-card-action { display: flex; align-items: center; justify-content: space-between; }
 }
 
 @media (prefers-reduced-motion: reduce) {
