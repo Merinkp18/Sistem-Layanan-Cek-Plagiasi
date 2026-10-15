@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Pengecekan Saya | SILACEK</title>
+    <title>{{ $isHistory ? 'Riwayat Saya' : 'Pengecekan Saya' }} | SILACEK</title>
     @vite(['resources/css/app.css'])
 </head>
 <body class="application-page checking-page">
@@ -24,9 +24,9 @@
         <aside class="application-sidebar">
             <nav aria-label="Navigasi utama">
                 <a class="sidebar-link" href="{{ route('pengajuan.create') }}"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 2.5h7l3 3v12H5v-15Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 2.5v3h3M7.5 9h5M7.5 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>Ajukan Pengecekan</span></a>
-                <a class="sidebar-link is-active" href="{{ route('pengecekan-saya.index') }}" aria-current="page"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Pengecekan Saya</span></a>
-                <a class="sidebar-link" href="{{ route('pengecekan-saya.index') }}"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Riwayat Saya</span></a>
-                <a class="sidebar-link" href="{{ route('pengajuan.create') }}"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 17c.4-3.1 2.4-4.8 6-4.8s5.6 1.7 6 4.8H4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Profil</span></a>
+                <a class="sidebar-link {{ $isHistory ? '' : 'is-active' }}" href="{{ route('pengecekan-saya.index') }}" @unless ($isHistory) aria-current="page" @endunless><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Pengecekan Saya</span></a>
+                <a class="sidebar-link {{ $isHistory ? 'is-active' : '' }}" href="{{ route('riwayat-saya.index') }}" @if ($isHistory) aria-current="page" @endif><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Riwayat Saya</span></a>
+                <a class="sidebar-link" href="{{ route('profile.edit') }}"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 17c.4-3.1 2.4-4.8 6-4.8s5.6 1.7 6 4.8H4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Profil</span></a>
             </nav>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
@@ -36,8 +36,8 @@
 
         <main class="application-main checking-content">
             <header class="checking-title">
-                <h1>Pengecekan Saya</h1>
-                <p>Pantau status pengecekanmu.</p>
+                <h1>{{ $isHistory ? 'Riwayat Saya' : 'Pengecekan Saya' }}</h1>
+                <p>{{ $isHistory ? 'Riwayat pengajuan pengecekan yang telah selesai.' : 'Pantau status pengecekanmu.' }}</p>
             </header>
 
             @forelse ($submissions as $submission)
@@ -87,24 +87,14 @@
                         </div>
                         <div class="checking-card-action">
                             <span class="checking-status status-{{ $submission->status }}">{{ $submission->status_label }}</span>
-                            <details class="checking-detail">
-                                <summary>Lihat Detail <span aria-hidden="true">&#8594;</span></summary>
-                                <div class="checking-detail-content">
-                                    <p><strong>Email:</strong> {{ $submission->email }}</p>
-                                    <p><strong>Jurusan:</strong> {{ $submission->jurusan ?: '-' }}</p>
-                                    <p><strong>Tujuan:</strong> {{ $submission->tujuan_cek }}</p>
-                                    @if ($submission->alasan_penolakan)
-                                        <p><strong>Alasan penolakan:</strong> {{ $submission->alasan_penolakan }}</p>
-                                    @endif
-                                </div>
-                            </details>
+                            <a class="checking-detail-link" href="{{ route('pengecekan-saya.show', $submission->id_pengajuan) }}">Lihat Detail <span aria-hidden="true">&#8594;</span></a>
                         </div>
                     </div>
                 </article>
             @empty
                 <div class="checking-empty">
-                    <h2>Belum ada pengajuan</h2>
-                    <p>Pengajuan yang kamu kirim akan tampil di sini.</p>
+                    <h2>{{ $isHistory ? 'Belum ada riwayat pengecekan' : 'Belum ada pengajuan' }}</h2>
+                    <p>{{ $isHistory ? 'Pengajuan yang telah selesai akan tampil di sini.' : 'Pengajuan yang kamu kirim akan tampil di sini.' }}</p>
                     <a href="{{ route('pengajuan.create') }}">Ajukan Pengecekan</a>
                 </div>
             @endforelse

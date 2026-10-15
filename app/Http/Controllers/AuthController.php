@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -115,6 +116,45 @@ class AuthController extends Controller
     public function dashboard(): View
     {
         return view('auth.dashboard');
+    }
+
+    public function profile(Request $request): View
+    {
+        abort_unless($request->session()->get('actor_role') === 'staff', 403);
+
+        $profile = DB::table('registrasi')
+            ->where('id_registrasi', $request->session()->get('actor_id'))
+            ->firstOrFail();
+
+        return view('profile.edit', compact('profile'));
+    }
+
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        abort_unless($request->session()->get('actor_role') === 'staff', 403);
+
+        $registrationId = $request->session()->get('actor_id');
+        $validated = $request->validate([
+            'nama_lengkap' => ['required', 'string', 'max:100', 'regex:/^[\p{L} .,\x27-]+$/u'],
+            'email' => ['required', 'email', 'max:100', Rule::unique('registrasi', 'email')->ignore($registrationId, 'id_registrasi')],
+            'no_hp' => ['required', 'regex:/^628[0-9]{8,12}$/'],
+        ], [
+            'nama_lengkap.regex' => 'Nama hanya boleh berisi huruf, spasi, titik, koma, apostrof, dan tanda strip.',
+            'email.unique' => 'Email sudah digunakan akun lain.',
+            'no_hp.regex' => 'Nomor HP tidak valid (contoh: 62XXXXXXXXXXX).',
+        ]);
+
+        DB::table('registrasi')
+            ->where('id_registrasi', $registrationId)
+            ->update([
+                'nama_lengkap' => $validated['nama_lengkap'],
+                'email' => $validated['email'],
+                'no_hp' => $validated['no_hp'],
+            ]);
+
+        $request->session()->put('actor_name', $validated['nama_lengkap']);
+
+        return redirect()->route('profile.edit')->with('profile_updated', 'Profil berhasil diperbarui.');
     }
 
     public function logout(Request $request): RedirectResponse

@@ -18,5 +18,14 @@ Route::middleware('auth.actor')->group(function (): void {
     Route::get('/pengajuan', [SubmissionController::class, 'create'])->name('pengajuan.create');
     Route::post('/pengajuan', [SubmissionController::class, 'store'])->name('pengajuan.store');
     Route::get('/pengecekan-saya', [SubmissionController::class, 'index'])->name('pengecekan-saya.index');
+    Route::get('/riwayat-saya', [SubmissionController::class, 'history'])->name('riwayat-saya.index');
+    Route::get('/profil', [AuthController::class, 'profile'])->name('profile.edit');
+    Route::put('/profil', [AuthController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/pengecekan-saya/{submission}', [SubmissionController::class, 'show'])
+        ->whereNumber('submission')
+        ->name('pengecekan-saya.show');
+    Route::get('/pengecekan-saya/{submission}/file/{file}', [SubmissionController::class, 'download'])
+        ->whereNumber('submission')
+        ->name('pengecekan-saya.file');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -18,18 +19,35 @@ class SubmissionController extends Controller
     {
         abort_unless($request->session()->get('actor_role') !== 'admin', 403);
 
-        $query = DB::table('form_pengajuan');
+        $submissions = $this->ownedSubmissions($request)->orderByDesc('tanggal_pengajuan')->get();
 
-        if ($request->session()->get('actor_role') === 'staff') {
-            $query->where('id_registrasi', $request->session()->get('actor_id'));
-        } elseif (is_string($request->session()->get('actor_nim_nip')) && $request->session()->get('actor_nim_nip') !== '') {
-            $query->where('nim_nip', $request->session()->get('actor_nim_nip'));
-        } else {
-            $query->whereRaw('1 = 0');
-        }
+        $this->decorateSubmissions($submissions);
 
-        $submissions = $query->orderByDesc('tanggal_pengajuan')->get();
+        return view('pengajuan.mine', [
+            'submissions' => $submissions,
+            'isHistory' => false,
+        ]);
+    }
 
+    public function history(Request $request): View
+    {
+        abort_unless($request->session()->get('actor_role') !== 'admin', 403);
+
+        $submissions = $this->ownedSubmissions($request)
+            ->where('status', 'selesai')
+            ->orderByDesc('tanggal_pengajuan')
+            ->get();
+
+        $this->decorateSubmissions($submissions);
+
+        return view('pengajuan.mine', [
+            'submissions' => $submissions,
+            'isHistory' => true,
+        ]);
+    }
+
+    private function decorateSubmissions($submissions): void
+    {
         foreach ($submissions as $submission) {
             $submission->queue_number = str_pad((string) $submission->id_pengajuan, 3, '0', STR_PAD_LEFT);
             $submission->submitted_date = Carbon::parse($submission->tanggal_pengajuan)
@@ -48,8 +66,85 @@ class SubmissionController extends Controller
                 default => 'Menunggu',
             };
         }
+    }
 
-        return view('pengajuan.mine', compact('submissions'));
+    public function show(Request $request, int $submission): View
+    {
+        abort_unless($request->session()->get('actor_role') !== 'admin', 403);
+
+        $record = $this->ownedSubmissions($request)
+            ->where('id_pengajuan', $submission)
+            ->firstOrFail();
+
+        $record->queue_number = str_pad((string) $record->id_pengajuan, 3, '0', STR_PAD_LEFT);
+        $record->submitted_date = Carbon::parse($record->tanggal_pengajuan)
+            ->locale('id')
+            ->translatedFormat('d F Y');
+        $record->submitted_datetime = Carbon::parse($record->tanggal_pengajuan)
+            ->locale('id')
+            ->translatedFormat('d F Y, H:i');
+        $record->progress_step = match ($record->status) {
+            'diproses' => 2,
+            'selesai' => 3,
+            default => 1,
+        };
+        $record->status_label = match ($record->status) {
+            'diproses' => 'Proses Pengecekan',
+            'selesai' => 'Hasil Pengecekan',
+            'ditolak' => 'Ditolak',
+            default => 'Menunggu',
+        };
+        $record->documents = collect([
+            ['label' => 'Karya Ilmiah', 'field' => 'file_karya', 'path' => $record->file_karya],
+            ['label' => 'SK Skripsi', 'field' => 'file_sk', 'path' => $record->file_sk],
+            ['label' => 'Bukti Instagram Perpustakaan', 'field' => 'ss_ig_perpus', 'path' => $record->ss_ig_perpus],
+            ['label' => 'Bukti Instagram Cinta Pustaka', 'field' => 'ss_ig_cinta_pustaka', 'path' => $record->ss_ig_cinta_pustaka],
+            ['label' => 'Bukti TikTok Cinta Pustaka', 'field' => 'ss_tiktok_cinta_pustaka', 'path' => $record->ss_tiktok_cinta_pustaka],
+        ])->filter(fn (array $file): bool => is_string($file['path']) && $file['path'] !== '')
+            ->map(fn (array $file): array => [...$file, 'name' => basename($file['path'])])
+            ->values();
+
+        return view('pengajuan.show', ['submission' => $record]);
+    }
+
+    public function download(Request $request, int $submission, string $file)
+    {
+        abort_unless($request->session()->get('actor_role') !== 'admin', 403);
+
+        abort_unless(in_array($file, [
+            'file_karya',
+            'file_sk',
+            'ss_ig_perpus',
+            'ss_ig_cinta_pustaka',
+            'ss_tiktok_cinta_pustaka',
+            'file_hasil_cek',
+        ], true), 404);
+
+        $record = $this->ownedSubmissions($request)
+            ->where('id_pengajuan', $submission)
+            ->firstOrFail();
+        $path = $record->{$file};
+
+        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->download($path, basename($path));
+    }
+
+    private function ownedSubmissions(Request $request): Builder
+    {
+        $query = DB::table('form_pengajuan');
+
+        if ($request->session()->get('actor_role') === 'staff') {
+            return $query->where('id_registrasi', $request->session()->get('actor_id'));
+        }
+
+        $identityNumber = $request->session()->get('actor_nim_nip');
+
+        if (is_string($identityNumber) && $identityNumber !== '') {
+            return $query->where('nim_nip', $identityNumber);
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     public function create(Request $request): View
